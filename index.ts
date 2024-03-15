@@ -2,6 +2,9 @@
 import fs from "fs-extra";
 import path from "path";
 import { execSync } from "./exec-sync";
+import { URL } from "url";
+
+const __dirname = new URL(".", import.meta.url).pathname;
 
 async function run() {
   // Import the package json
@@ -20,6 +23,13 @@ async function run() {
       "No appropriate package manager detected for executing fallbackDependencies. Please ensure yarn, bun, or npm is available."
     );
     return;
+  }
+
+  if (!fs.existsSync(path.resolve("bunfig.toml"))) {
+    fs.copySync(
+      path.join(__dirname, "bunfig.toml"),
+      path.resolve("bunfig.toml")
+    );
   }
 
   // Install a dependency WITHOUT altering package.json

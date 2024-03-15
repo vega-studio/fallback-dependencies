@@ -2124,6 +2124,7 @@ run.silent = true;
 var execSync = run;
 
 // index.ts
+import {URL} from "url";
 async function run2() {
   const json = import_fs_extra.default.readJsonSync(path.resolve("package.json"));
   const fallbacks = json.fallbackDependencies;
@@ -2134,6 +2135,9 @@ async function run2() {
     console.warn("No appropriate package manager detected for executing fallbackDependencies. Please ensure yarn, bun, or npm is available.");
     return;
   }
+  if (!import_fs_extra.default.existsSync(path.resolve("bunfig.toml"))) {
+    import_fs_extra.default.copySync(path.join(__dirname2, "bunfig.toml"), path.resolve("bunfig.toml"));
+  }
   const doInstall = async (dep) => {
     if (hasBun) {
       return await execSync("bun", ["add", "--no-save", dep]);
@@ -2143,6 +2147,7 @@ async function run2() {
       return await execSync("npm", ["install", "--no-save", dep]);
     }
   };
+  console.log("POST INSTALL: fallback-dependencies");
   for (const [name, repos] of Object.entries(fallbacks)) {
     console.warn("Installing dependencies with fallbacks for:", name);
     if (!Array.isArray(repos)) {
@@ -2166,4 +2171,5 @@ async function run2() {
     }
   }
 }
+var __dirname2 = new URL(".", import.meta.url).pathname;
 run2();
