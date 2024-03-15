@@ -10,8 +10,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@types/bun": "^1.0.8",
-    "fs-extra": "^11.2.0"
+    "@types/bun": "1.0.8",
+    "fs-extra": "11.2.0"
   },
   "fallbackDependencies": {
     "express": [

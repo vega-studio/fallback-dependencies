@@ -33,6 +33,8 @@ async function run() {
     }
   };
 
+  console.log("POST INSTALL: fallback-dependencies");
+
   for (const [name, repos] of Object.entries(fallbacks)) {
     console.warn("Installing dependencies with fallbacks for:", name);
 
