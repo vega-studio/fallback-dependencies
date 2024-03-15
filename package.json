@@ -1,0 +1,23 @@
+{
+  "name": "fallback-dependencies",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist.js",
+  "scripts": {
+    "release": "bun build --target=bun ./index.ts --output=./dist.js > ./dist.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@types/bun": "^1.0.8",
+    "fs-extra": "^11.2.0"
+  },
+  "fallbackDependencies": {
+    "express": [
+      "__this-will-absolutely-fail__.fail",
+      "express",
+      "this-will-not-install"
+    ]
+  }
+}
