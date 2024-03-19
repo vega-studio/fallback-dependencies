@@ -32,6 +32,12 @@ async function run() {
     );
   }
 
+  // For bun we do a cache clean to ensure the versions do get updated. The
+  // cache can cause the install to be improperly ignored.
+  if (hasBun) {
+    execSync("bun", ["pm", "cache", "rm"]);
+  }
+
   // Install a dependency WITHOUT altering package.json
   const doInstall = async (dep: string) => {
     if (hasBun) {
