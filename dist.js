@@ -2138,6 +2138,9 @@ async function run2() {
   if (!import_fs_extra.default.existsSync(path.resolve("bunfig.toml"))) {
     import_fs_extra.default.copySync(path.join(__dirname2, "bunfig.toml"), path.resolve("bunfig.toml"));
   }
+  if (hasBun) {
+    execSync("bun", ["pm", "cache", "rm"]);
+  }
   const doInstall = async (dep) => {
     if (hasBun) {
       return await execSync("bun", ["add", "--no-save", dep]);
