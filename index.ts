@@ -76,6 +76,9 @@ async function run() {
     ? fs.readJsonSync(CACHE_FILE)
     : {};
 
+  log("Fallbacks:");
+  log(JSON.stringify(fallbacks, null, 2));
+
   log("Using cache:");
   log(JSON.stringify(cache, null, 2));
 
