@@ -43,11 +43,26 @@ async function run() {
     if (isString(dep)) dep = [dep];
 
     if (hasBun) {
-      return await execSync("bun", ["add", "--no-save", ...dep]);
+      return await execSync("bun", [
+        "add",
+        "--no-save",
+        "--ignore-scripts",
+        ...dep,
+      ]);
     } else if (hasYarn) {
-      return await execSync("yarn", ["add", "--no-save", ...dep]);
+      return await execSync("yarn", [
+        "add",
+        "--no-save",
+        "--ignore-scripts",
+        ...dep,
+      ]);
     } else if (hasNpm) {
-      return await execSync("npm", ["install", "--no-save", ...dep]);
+      return await execSync("npm", [
+        "install",
+        "--no-save",
+        "--ignore-scripts",
+        ...dep,
+      ]);
     }
   };
 

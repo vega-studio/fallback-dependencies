@@ -1,10 +1,10 @@
 {
   "name": "fallback-dependencies",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "",
   "main": "dist.js",
   "scripts": {
-    "release": "bun build --target=bun ./index.ts --output=./dist.js > ./dist.js"
+    "release": "bun build --minify --target=bun ./index.ts --output=./dist.js > ./dist.js"
   },
   "keywords": [],
   "author": "",
