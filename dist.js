@@ -2154,7 +2154,7 @@ async function run2() {
   };
   console.log("POST INSTALL: fallback-dependencies");
   const cacheMisses = [];
-  const cache = import_fs_extra.default.readJsonSync(CACHE_FILE);
+  const cache = import_fs_extra.default.existsSync(CACHE_FILE) ? import_fs_extra.default.readJsonSync(CACHE_FILE) : {};
   for (const [name, repos] of Object.entries(fallbacks)) {
     console.warn("Installing dependencies with fallbacks for:", name);
     if (!Array.isArray(repos)) {

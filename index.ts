@@ -53,7 +53,9 @@ async function run() {
 
   console.log("POST INSTALL: fallback-dependencies");
   const cacheMisses: [string, string][] = [];
-  const cache = fs.readJsonSync(CACHE_FILE);
+  const cache: object = fs.existsSync(CACHE_FILE)
+    ? fs.readJsonSync(CACHE_FILE)
+    : {};
 
   for (const [name, repos] of Object.entries(fallbacks)) {
     console.warn("Installing dependencies with fallbacks for:", name);
