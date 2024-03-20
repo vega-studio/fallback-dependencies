@@ -2125,6 +2125,9 @@ var execSync = run;
 
 // index.ts
 import {URL} from "url";
+var isString = function(val) {
+  return val?.charAt;
+};
 async function run2() {
   const json = import_fs_extra.default.readJsonSync(path.resolve("package.json"));
   const fallbacks = json.fallbackDependencies;
@@ -2138,19 +2141,20 @@ async function run2() {
   if (!import_fs_extra.default.existsSync(path.resolve("bunfig.toml"))) {
     import_fs_extra.default.copySync(path.join(__dirname2, "bunfig.toml"), path.resolve("bunfig.toml"));
   }
-  if (hasBun) {
-    execSync("bun", ["pm", "cache", "rm"]);
-  }
   const doInstall = async (dep) => {
+    if (isString(dep))
+      dep = [dep];
     if (hasBun) {
-      return await execSync("bun", ["add", "--no-save", dep]);
+      return await execSync("bun", ["add", "--no-save", ...dep]);
     } else if (hasYarn) {
-      return await execSync("yarn", ["add", "--no-save", dep]);
+      return await execSync("yarn", ["add", "--no-save", ...dep]);
     } else if (hasNpm) {
-      return await execSync("npm", ["install", "--no-save", dep]);
+      return await execSync("npm", ["install", "--no-save", ...dep]);
     }
   };
   console.log("POST INSTALL: fallback-dependencies");
+  const cacheMisses = [];
+  const cache = import_fs_extra.default.readJsonSync(CACHE_FILE);
   for (const [name, repos] of Object.entries(fallbacks)) {
     console.warn("Installing dependencies with fallbacks for:", name);
     if (!Array.isArray(repos)) {
@@ -2166,6 +2170,9 @@ async function run2() {
       if (await doInstall(repo)) {
         console.log("Installed:", repo);
         success = true;
+        if (cache[name] !== repo) {
+          cacheMisses.push([name, repo]);
+        }
         break;
       }
     }
@@ -2173,6 +2180,22 @@ async function run2() {
       console.error("No fallback dependency worked for:", name);
     }
   }
+  if (cacheMisses.length > 0) {
+    if (hasBun) {
+      if (!await execSync("bun", ["pm", "cache", "rm"]) || !await doInstall(cacheMisses.map((x) => x[1]))) {
+        import_fs_extra.default.appendFileSync(LOG_FILE, "Failed to correct cache misses for bun", {
+          encoding: "utf-8"
+        });
+        return;
+      }
+    }
+    cacheMisses.forEach(([name, repo]) => {
+      cache[name] = repo;
+    });
+    import_fs_extra.default.writeJsonSync(CACHE_FILE, cache, { encoding: "utf-8" });
+  }
 }
 var __dirname2 = new URL(".", import.meta.url).pathname;
+var LOG_FILE = path.resolve(__dirname2, "post-install.log");
+var CACHE_FILE = path.resolve(__dirname2, ".cache.json");
 run2();
