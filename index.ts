@@ -12,6 +12,10 @@ function isString(val: any): val is string {
   return val?.charAt;
 }
 
+function log(message: string) {
+  fs.appendFileSync(LOG_FILE, `\n${message}`, { encoding: "utf-8" });
+}
+
 async function run() {
   // Import the package json
   const json = fs.readJsonSync(path.resolve("package.json"));
@@ -72,6 +76,9 @@ async function run() {
     ? fs.readJsonSync(CACHE_FILE)
     : {};
 
+  log("Using cache:");
+  log(JSON.stringify(cache, null, 2));
+
   for (const [name, repos] of Object.entries(fallbacks)) {
     console.warn("Installing dependencies with fallbacks for:", name);
 
@@ -114,6 +121,9 @@ async function run() {
   }
 
   if (cacheMisses.length > 0) {
+    log("Cache misses detected:");
+    log(JSON.stringify(cacheMisses, null, 2));
+
     // For bun we do a cache clean to ensure the versions do get updated. The
     // cache can cause the install to be improperly ignored.
     if (hasBun) {
@@ -121,9 +131,7 @@ async function run() {
         !(await execSync("bun", ["pm", "cache", "rm"])) ||
         !(await doInstall(cacheMisses.map((x) => x[1])))
       ) {
-        fs.appendFileSync(LOG_FILE, "Failed to correct cache misses for bun", {
-          encoding: "utf-8",
-        });
+        log("Failed to correct cache misses for bun");
         return;
       }
     }
