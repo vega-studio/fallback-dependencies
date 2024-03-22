@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import path from "path";
 import { execSync } from "./exec-sync";
 import { URL } from "url";
+import { execSyncResult } from "./exec-sync-result";
 
 const __dirname = new URL(".", import.meta.url).pathname;
 const LOG_FILE = path.resolve(__dirname, "post-install.log");
@@ -12,8 +13,9 @@ function isString(val: any): val is string {
   return val?.charAt;
 }
 
-function log(message: string) {
-  fs.appendFileSync(LOG_FILE, `\n${message}`, { encoding: "utf-8" });
+function log(...message: string[]) {
+  fs.appendFileSync(LOG_FILE, `\n${message.join(" ")}`, { encoding: "utf-8" });
+  console.warn(...message);
 }
 
 async function run() {
@@ -29,7 +31,7 @@ async function run() {
   const hasNpm = !hasBun && !hasYarn ? await execSync("npm", ["-v"]) : false;
 
   if (!hasBun && !hasNpm && !hasYarn) {
-    console.warn(
+    log(
       "No appropriate package manager detected for executing fallbackDependencies. Please ensure yarn, bun, or npm is available."
     );
     return;
@@ -47,12 +49,32 @@ async function run() {
     if (isString(dep)) dep = [dep];
 
     if (hasBun) {
-      return await execSync("bun", [
-        "add",
-        "--no-save",
-        "--ignore-scripts",
-        ...dep,
-      ]);
+      const result = Boolean(
+        await execSyncResult("bun", [
+          "add",
+          "--no-save",
+          "--ignore-scripts",
+          ...dep,
+        ])
+      );
+
+      // For bun, we sometimes get these cache errors when installing that
+      // prevents it from installing the most up to date dependency. So if we
+      // see this, we try nuking the cache and trying again.
+      if (
+        execSyncResult.lastError.includes("no commit matching") &&
+        execSyncResult.lastError.includes("but repository exists")
+      ) {
+        await execSync("bun", ["pm", "cache", "rm"]);
+        return await execSync("bun", [
+          "add",
+          "--no-save",
+          "--ignore-scripts",
+          ...dep,
+        ]);
+      }
+
+      return result;
     } else if (hasYarn) {
       return await execSync("yarn", [
         "add",
@@ -70,27 +92,20 @@ async function run() {
     }
   };
 
-  console.log("POST INSTALL: fallback-dependencies");
-  const cacheMisses: [string, string][] = [];
-  const cache: object = fs.existsSync(CACHE_FILE)
-    ? fs.readJsonSync(CACHE_FILE)
-    : {};
+  log("POST INSTALL: fallback-dependencies");
 
   log("Fallbacks:");
   log(JSON.stringify(fallbacks, null, 2));
 
-  log("Using cache:");
-  log(JSON.stringify(cache, null, 2));
-
   for (const [name, repos] of Object.entries(fallbacks)) {
-    console.warn("Installing dependencies with fallbacks for:", name);
+    log("Installing dependencies with fallbacks for:", name);
 
     if (!Array.isArray(repos)) {
-      console.warn(
+      log(
         "Invalid fallbacks for:",
         name,
         "Expected an array but got:",
-        repos
+        JSON.stringify(repos)
       );
       continue;
     }
@@ -98,52 +113,21 @@ async function run() {
     let success = false;
 
     for (const repo of repos) {
-      if (!repo.charAt) {
-        console.warn(
-          "Invalid repo for:",
-          name,
-          "Expected a string but got:",
-          repo
-        );
+      if (!isString(repo)) {
+        log("Invalid repo for:", name, "Expected a string but got:", repo);
         continue;
       }
 
       if (await doInstall(repo)) {
-        console.log("Installed:", repo);
+        log("Installed:", repo);
         success = true;
-        if (cache[name] !== repo) {
-          cacheMisses.push([name, repo]);
-        }
         break;
       }
     }
 
     if (!success) {
-      console.error("No fallback dependency worked for:", name);
+      log("No fallback dependency worked for:", name);
     }
-  }
-
-  if (cacheMisses.length > 0) {
-    log("Cache misses detected:");
-    log(JSON.stringify(cacheMisses, null, 2));
-
-    // For bun we do a cache clean to ensure the versions do get updated. The
-    // cache can cause the install to be improperly ignored.
-    if (hasBun) {
-      if (
-        !(await execSync("bun", ["pm", "cache", "rm"])) ||
-        !(await doInstall(cacheMisses.map((x) => x[1])))
-      ) {
-        log("Failed to correct cache misses for bun");
-        return;
-      }
-    }
-
-    cacheMisses.forEach(([name, repo]) => {
-      cache[name] = repo;
-    });
-
-    fs.writeJsonSync(CACHE_FILE, cache, { encoding: "utf-8" });
   }
 }
 
