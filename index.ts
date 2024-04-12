@@ -49,7 +49,7 @@ async function run() {
     if (isString(dep)) dep = [dep];
 
     if (hasBun) {
-      const result = Boolean(
+      let result = Boolean(
         await execSyncResult("bun", [
           "add",
           "--no-save",
@@ -65,13 +65,20 @@ async function run() {
         execSyncResult.lastError.includes("no commit matching") &&
         execSyncResult.lastError.includes("but repository exists")
       ) {
-        await execSync("bun", ["pm", "cache", "rm"]);
-        return await execSync("bun", [
-          "add",
-          "--no-save",
-          "--ignore-scripts",
-          ...dep,
-        ]);
+        await execSyncResult("bun", ["pm", "cache", "rm"]);
+
+        result = Boolean(
+          await execSyncResult("bun", [
+            "add",
+            "--no-save",
+            "--ignore-scripts",
+            ...dep,
+          ])
+        );
+      }
+
+      if (!result) {
+        log(`Failed to install dependency with bun: ${dep}`);
       }
 
       return result;
