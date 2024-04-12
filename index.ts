@@ -6,8 +6,7 @@ import { URL } from "url";
 import { execSyncResult } from "./exec-sync-result";
 
 const __dirname = new URL(".", import.meta.url).pathname;
-const LOG_FILE = path.resolve(__dirname, "post-install.log");
-const CACHE_FILE = path.resolve(__dirname, ".cache.json");
+const LOG_FILE = path.join(__dirname, "post-install.log");
 
 function isString(val: any): val is string {
   return val?.charAt;
