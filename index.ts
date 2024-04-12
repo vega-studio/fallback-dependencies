@@ -137,6 +137,61 @@ async function run() {
 
     if (!success) {
       log("No fallback dependency worked for:", name);
+      continue;
+    }
+
+    // This will correct any bin installation issues with the dependencies
+    // installed. Essentially, if the dependency has a bin in it's package.json
+    // it will make sure that bin file is added to the .bin directory. This
+    // seems to mostly be an issue on windows with bun.
+    const nodeModulesPath = path.resolve("node_modules");
+
+    // Check that the fallback identifier was installed
+    if (!fs.existsSync(path.join(nodeModulesPath, name))) {
+      log(
+        `A fallback dependency was installed, however, the key provided "${name}" in the fallback dependency configuration does NOT match the package identifier.\nError: node_modules/${name} was not found.`
+      );
+      continue;
+    }
+
+    // Ensure the bin listed in the installed package.json is copied to .bin
+    const packageJsonPath = path.join(nodeModulesPath, name, "package.json");
+
+    if (!fs.existsSync(packageJsonPath)) {
+      log(
+        `A fallback dependency was installed, however, the package.json for "${name}" was not found at: ${packageJsonPath}.`
+      );
+      continue;
+    }
+
+    const packageJson = fs.readJsonSync(packageJsonPath);
+
+    if (packageJson.bin) {
+      for (const binName of Object.keys(packageJson.bin)) {
+        // See if the bin name exists in our bin directory
+        const binDirPath = path.join(nodeModulesPath, ".bin");
+        // Make sure our .bin directory exists
+        if (!fs.existsSync(binDirPath)) fs.ensureDirSync(binDirPath);
+        // Make sure the bin file exists
+        const binFilePath = path.join(binDirPath, binName);
+        if (fs.existsSync(binFilePath)) continue;
+        // Get the path to the bin file to copy over
+        const binPath = path.join(
+          nodeModulesPath,
+          name,
+          packageJson.bin[binName]
+        );
+
+        if (!fs.existsSync(binPath)) {
+          log(
+            `A fallback dependency was installed, however, the bin "${binName}" was not found at: ${binPath}.`
+          );
+          continue;
+        }
+
+        // Copy the bin file over
+        fs.copySync(binPath, binFilePath);
+      }
     }
   }
 }
