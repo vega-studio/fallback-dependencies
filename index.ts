@@ -19,6 +19,12 @@ function log(...message: string[]) {
 }
 
 async function run() {
+  // Ensure the log file exists
+  if (!fs.existsSync(LOG_FILE)) {
+    fs.ensureFileSync(LOG_FILE);
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
   // Import the package json
   const json = fs.readJsonSync(path.resolve("package.json"));
   // Get the fallback dep object
