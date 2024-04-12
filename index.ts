@@ -2,10 +2,10 @@
 import fs from "fs-extra";
 import path from "path";
 import { execSync } from "./exec-sync";
-import { URL } from "url";
+import { URL, fileURLToPath } from "url";
 import { execSyncResult } from "./exec-sync-result";
 
-const __dirname = new URL(".", import.meta.url).pathname;
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const LOG_FILE = path.join(__dirname, "post-install.log");
 
 function isString(val: any): val is string {
