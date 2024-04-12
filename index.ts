@@ -122,6 +122,9 @@ async function run() {
         log("Installed:", repo);
         success = true;
         break;
+      } else {
+        log("Installation failed for:", repo);
+        log("Attempting fallback...");
       }
     }
 
