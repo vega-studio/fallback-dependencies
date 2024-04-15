@@ -172,14 +172,14 @@ async function run() {
     const packageJson = fs.readJsonSync(packageJsonPath);
 
     if (packageJson.bin) {
+      // See if the bin name exists in our bin directory
+      const binDirPath = path.join(nodeModulesPath, ".bin");
+      // Make sure our .bin directory exists
+      if (!fs.existsSync(binDirPath)) fs.ensureDirSync(binDirPath);
+
       for (const binName of Object.keys(packageJson.bin)) {
-        // See if the bin name exists in our bin directory
-        const binDirPath = path.join(nodeModulesPath, ".bin");
-        // Make sure our .bin directory exists
-        if (!fs.existsSync(binDirPath)) fs.ensureDirSync(binDirPath);
         // Make sure the bin file exists
         const binFilePath = path.join(binDirPath, binName);
-        if (fs.existsSync(binFilePath)) continue;
         // Get the path to the bin file to copy over
         const binPath = path.join(
           nodeModulesPath,
