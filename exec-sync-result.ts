@@ -37,7 +37,9 @@ async function run(
           result.exitCode
         }`
       );
+      console.error("Error Buffer:\n", result.stderr.toString());
       console.error(new Error().stack);
+      run.lastError = result.stderr.toString();
 
       return null;
     }
