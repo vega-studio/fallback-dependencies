@@ -1,5 +1,5 @@
 $SCRIPT_PATH = Split-Path -Parent (Get-Item -Path $MyInvocation.MyCommand.Definition).FullName
-$PATH_MAIN = "$SCRIPT_PATH\dist.js"
+$PATH_MAIN = "$SCRIPT_PATH\dist.mjs"
 
 if (Get-Command -Name bun -ErrorAction SilentlyContinue) {
   Add-Content -Path "$SCRIPT_PATH\post-install.log" -Value "`nUsed BUN"
